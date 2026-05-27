@@ -5,25 +5,30 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <allegro5/allegro.h>
 using namespace std;
+
+bool finished = false;
+bool timeOut = false;
 
 class logic {
 public:
-    logic();
     //constructor
-    void introduction();
+    logic();
     //Provides a basic introduction to the user
-    bool createLists();
+    void introduction();
     //Opens a file and reads in the list of words that can be scrambled
     //Returns: true if words inserted and false if not
-    bool playGame();
+    bool createLists();
     //Carries out the actual word scrambling
     //Returns: true if user wins and false if not
-    string scrambler(string word);
+    bool playGame();
     //Takes in a word and scrambles it
     //Returns a scrambled version of the parameter
-    void end();
+    string scrambler(string word);
     //Displays the endgame information
+    void end();
+
 private:
     int numCorrect,             //the number of correct words
         smallWordLength,       //length of word arrays
@@ -45,12 +50,13 @@ logic::logic() {
 }
 
 void logic::introduction() {
-    cout << "Welcome to Scramble!" << endl << "You will be shown a scrambled word. You have 60 seconds to unscramble the word.";
+    cout << "Welcome to Scramble!" << endl << "You will be shown a scrambled word. You have 60 seconds to unscramble the word." << endl;
 }
 
 bool logic::createLists() {
     ifstream inFS;
     string word;
+    bool wordsInserted = false;
     inFS.open("dictionary.txt", std::ios::in);
     if (!inFS.is_open()) {
         cerr << "Could not open file dictionary.txt" << endl;
@@ -76,33 +82,46 @@ bool logic::createLists() {
     smallWordLength = smallWords.size();
     mediumWordLength = mediumWords.size();
     largeWordLength = largeWords.size();
+    if (smallWordLength > 0 && mediumWordLength > 0 && largeWordLength > 0) {
+        wordsInserted = true;
+    }
+    return wordsInserted;
 }
 
 bool logic::playGame() {
+    
+    bool win = false;
+
     string word;
     string guess;
     for (int i = 1; i <= 5; ++i) {
         cout << "GET READY FOR LEVEL " << i << endl;
-        if (i >= 1 && i <= 2) {
+        cout << "The word to guess is: ";
+        if (i == 1 || i == 2) {
             word = smallWords.at(rand() % smallWordLength);
         }
-        else if (i >= 3 && i <= 4) {
+        else if (i == 3 || i == 4) {
             word = mediumWords.at(rand() % mediumWordLength);
         }
         else if (i == 5) {
             word = largeWords.at(rand() % largeWordLength);
         }
-        cout << "The word to guess is: " << scrambler(word) << endl;
-        cout << "Give it a guess: ";
+        cout << scrambler(word) << endl;
         cin >> guess;
         if (guess == word) {
-            cout << "Hooray the word was " << word << endl;
+            cout << "Horray ";
             numCorrect++;
         }
         else {
-            cout << "Sorry, the word is " << word << endl;
+            cout << "I am sorry ";
         }
+        cout << "the word was " << word << endl;
     }
+
+    if (finished) {
+        win = true;
+    }
+    return win;
 }
 
 string logic::scrambler(string unscrambled_word) {
@@ -118,15 +137,54 @@ string logic::scrambler(string unscrambled_word) {
 
 void logic::end() {
     cout << "Thank you for playing Scramble." << endl << endl << "You managed to get " << numCorrect;
-    cout << " out of 5 correct!" << endl << "Press any key to continue . . .";
+    cout << " out of 5 correct!" << endl;
+}
+
+void* input(ALLEGRO_THREAD* ptr, void* arg) {
+    finished = false;
+    logic l;
+    l.playGame();
+    finished = true;
+    return NULL;
+}
+
+void* timer(ALLEGRO_THREAD* ptr, void* arg) {
+    time_t startTime, currentTime; //times used to measure elapsed time
+    startTime = time(NULL);
+    currentTime = time(NULL);
+    while (currentTime - startTime < 60 && !finished) {
+        currentTime = time(NULL);
+    }
+    timeOut = true;
+    return NULL;
 }
 
 int main()
 {
     logic l;
 
+    void* input(ALLEGRO_THREAD * ptr, void* arg);
+    void* timer(ALLEGRO_THREAD * ptr, void* arg);
+
+    ALLEGRO_THREAD* create1 = NULL, * create2 = NULL; //used for return value from thread creation
+
+    create1 = al_create_thread(input, NULL);
+    create2 = al_create_thread(timer, NULL);
+
     l.introduction();
     l.createLists();
-    l.playGame();
+    while (!finished && !timeOut) {
+       if (!finished && !timeOut) {
+           al_start_thread(create1);
+           al_start_thread(create2);
+       }
+       else
+       {
+           al_destroy_thread(create1);
+           al_destroy_thread(create2);
+       }
+
+    }
+
     l.end();
 }
