@@ -130,7 +130,7 @@ string logic::scrambler(string unscrambled_word) {
     while (temp.length() != 0) {
         int index = rand() % temp.length();
         scrambled_word += unscrambled_word.at(index);
-        temp.erase(temp.begin()+index);
+        temp.erase(index, 1); // Used erase method from GeeksForGeeks website.
     }
     return scrambled_word;
 }
@@ -141,8 +141,8 @@ void logic::end() {
 }
 
 void* input(ALLEGRO_THREAD* ptr, void* arg) {
-    logic* l = (logic*)arg;
     finished = false;
+    logic* l = (logic*) arg;
     l->playGame();
     finished = true;
     return NULL;
@@ -156,6 +156,7 @@ void* timer(ALLEGRO_THREAD* ptr, void* arg) {
         currentTime = time(NULL);
     }
     timeOut = true;
+    return NULL;
 }
 
 int main()
