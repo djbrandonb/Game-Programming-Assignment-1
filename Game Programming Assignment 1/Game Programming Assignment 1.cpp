@@ -141,9 +141,9 @@ void logic::end() {
 }
 
 void* input(ALLEGRO_THREAD* ptr, void* arg) {
+    logic* l = (logic*)arg;
     finished = false;
-    logic l;
-    l.playGame();
+    l->playGame();
     finished = true;
     return NULL;
 }
@@ -156,7 +156,6 @@ void* timer(ALLEGRO_THREAD* ptr, void* arg) {
         currentTime = time(NULL);
     }
     timeOut = true;
-    return NULL;
 }
 
 int main()
@@ -168,7 +167,7 @@ int main()
 
     ALLEGRO_THREAD* create1 = NULL, * create2 = NULL; //used for return value from thread creation
 
-    create1 = al_create_thread(input, NULL);
+    create1 = al_create_thread(input, &l);
     create2 = al_create_thread(timer, NULL);
 
     l.introduction();
