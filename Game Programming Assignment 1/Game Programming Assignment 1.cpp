@@ -67,21 +67,21 @@ bool logic::createLists() {
         inFS >> word;
         if (word.length() >= 4 && word.length() <= 5) {
             smallWords.push_back(word);
-            smallWordLength++;
         }
         else if (word.length() >= 6 && word.length() <= 7) {
             mediumWords.push_back(word);
-            mediumWordLength++;
         }
         else if (word.length() >= 8) {
             largeWords.push_back(word);
-            largeWordLength++;
         }
     }
 
     if (inFS.fail()) {
         cout << "Input failure before reaching end of file." << endl;
     }
+    smallWordLength = smallWords.size();
+    mediumWordLength = mediumWords.size();
+    largeWordLength = largeWords.size();
     if (smallWordLength > 0 && mediumWordLength > 0 && largeWordLength > 0) {
         wordsInserted = true;
     }
@@ -126,13 +126,13 @@ bool logic::playGame() {
 
 string logic::scrambler(string unscrambled_word) {
     string scrambled_word;
+    int index;
     string temp = unscrambled_word;
     while (temp.length() != 0) {
-        int index = rand() % temp.length();
-        scrambled_word += unscrambled_word.at(index);
-        temp.erase(index, 1); // Used erase method from GeeksForGeeks website.
-        cout << index << endl;
-        cout << temp.length() << endl;
+        index = rand() % temp.length();
+        scrambled_word += temp.at(index);
+        temp.erase(index, 1);
+        
     }
     return scrambled_word;
 }
@@ -144,7 +144,7 @@ void logic::end() {
 
 void* input(ALLEGRO_THREAD* ptr, void* arg) {
     finished = false;
-    logic* l = (logic*) arg;
+    logic* l = (logic*)arg;
     l->playGame();
     finished = true;
     return NULL;
